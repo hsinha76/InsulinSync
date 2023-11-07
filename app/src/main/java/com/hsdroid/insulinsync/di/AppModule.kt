@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.Context
 import androidx.room.Room
 import com.hsdroid.insulinsync.data.local.LocalDatabase
+import com.hsdroid.insulinsync.data.local.dao.ProfileDao
 import com.hsdroid.insulinsync.data.local.dao.StoreDao
 import dagger.Module
 import dagger.Provides
@@ -25,6 +26,12 @@ object AppModule {
     @Provides
     fun getDao(db: LocalDatabase): StoreDao {
         return db.getDao()
+    }
+
+    @Singleton
+    @Provides
+    fun getProfileDao(db: LocalDatabase) : ProfileDao{
+        return db.getProfileDao()
     }
 
     @Provides

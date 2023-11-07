@@ -12,7 +12,7 @@ android {
 
     defaultConfig {
         applicationId = "com.hsdroid.insulinsync"
-        minSdk = 24
+        minSdk = 26
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
@@ -90,5 +90,8 @@ dependencies {
     implementation("androidx.room:room-runtime:$room_version")
     kapt("androidx.room:room-compiler:$room_version")
     implementation ("androidx.room:room-ktx:$room_version")
+
+    //TimePicker
+    implementation ("com.github.vsnappy1:ComposeDatePicker:2.2.0")
 
 }

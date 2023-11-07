@@ -8,11 +8,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.hsdroid.insulinsync.ui.theme.InsulinSyncTheme
 import com.hsdroid.insulinsync.ui.viewmodel.InsulinViewModel
 import dagger.hilt.android.AndroidEntryPoint
@@ -31,18 +32,26 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    navGraph(insulinViewModel)
+                    navGraph()
                 }
             }
         }
     }
-}
 
-@Composable
-fun navGraph(insulinViewModel: InsulinViewModel) {
-    val navController = rememberNavController()
-    NavHost(navController = navController, startDestination = "profile") {
-        composable("profile") { ProfileScreen(navController, insulinViewModel) }
-        composable("home"){ HomeScreen(navController, insulinViewModel)}
+    @Composable
+    fun navGraph() {
+        val navController = rememberNavController()
+        NavHost(navController = navController, startDestination = "profile") {
+            composable("profile") { ProfileScreen(navController, insulinViewModel) }
+            composable(
+                "home/{uname}",
+                arguments = listOf(navArgument("uname") { type = NavType.StringType })
+            ) {
+                val receivedUname = it.arguments?.getString("uname")
+                if (receivedUname != null) {
+                    HomeScreen(navController, insulinViewModel, receivedUname)
+                }
+            }
+        }
     }
 }
