@@ -29,9 +29,8 @@ class InsulinViewModel @Inject constructor(private val repository: InsulinReposi
     val _profileResponse: StateFlow<ApiState<List<Profile>>> get() = profileResponse
 
     init {
-        getAllData()
+        getProfileData()
     }
-
     fun addDataToProfile(profile: Profile) {
         repository.insertProfileData(profile)
     }
@@ -44,15 +43,15 @@ class InsulinViewModel @Inject constructor(private val repository: InsulinReposi
         repository.deleteData(insulin)
     }
 
-    private fun getAllData() = viewModelScope.launch {
-        repository.getAllData()
+    fun getAllData(uname : String) = viewModelScope.launch {
+        repository.getAllData(uname)
             .onStart { response.value = ApiState.LOADING }
             .catch { response.value = ApiState.FAILURE(it) }
             .collect { response.value = ApiState.SUCCESS(it) }
     }
 
-    private fun getProfileData(uname: String) = viewModelScope.launch {
-        repository.getProfileData(uname)
+    private fun getProfileData() = viewModelScope.launch {
+        repository.getProfileData()
             .onStart { profileResponse.value = ApiState.LOADING }
             .catch { profileResponse.value = ApiState.FAILURE(it) }
             .collect { profileResponse.value = ApiState.SUCCESS(it) }

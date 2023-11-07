@@ -20,12 +20,12 @@ class InsulinRepository @Inject constructor(
         storeDao.insertData(insulin)
     }
 
-    fun getAllData(): Flow<List<Insulin>> {
-        return storeDao.getAllData()
+    fun getAllData(uname : String): Flow<List<Insulin>> {
+        return storeDao.getProfileData(uname)
     }
 
-    fun getProfileData(uname: String) : Flow<List<Profile>>{
-        return profileDao.getProfile(uname)
+    fun getProfileData() : Flow<List<Profile>>{
+        return profileDao.getProfile()
     }
     fun deleteData(insulin: Insulin) {
         storeDao.deleteData(insulin)

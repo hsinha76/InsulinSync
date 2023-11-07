@@ -43,6 +43,7 @@ class MainActivity : ComponentActivity() {
         val navController = rememberNavController()
         NavHost(navController = navController, startDestination = "profile") {
             composable("profile") { ProfileScreen(navController, insulinViewModel) }
+            composable("register") { RegisterScreen(navController, insulinViewModel) }
             composable(
                 "home/{uname}",
                 arguments = listOf(navArgument("uname") { type = NavType.StringType })

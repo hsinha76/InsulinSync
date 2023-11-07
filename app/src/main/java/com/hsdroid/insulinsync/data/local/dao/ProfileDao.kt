@@ -11,6 +11,6 @@ interface ProfileDao {
     @Insert
     fun addProfile(profile: Profile)
 
-    @Query("SELECT * from profile where name = :uname")
-    fun getProfile(uname: String) : Flow<List<Profile>>
+    @Query("SELECT * from profile order by id ASC")
+    fun getProfile(): Flow<List<Profile>>
 }

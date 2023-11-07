@@ -3,6 +3,7 @@ package com.hsdroid.insulinsync.ui.view
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,6 +20,9 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -27,6 +31,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -55,6 +60,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.ParagraphStyle
@@ -74,6 +81,7 @@ import com.hsdroid.insulinsync.models.Insulin
 import com.hsdroid.insulinsync.models.Profile
 import com.hsdroid.insulinsync.ui.theme.Background
 import com.hsdroid.insulinsync.ui.theme.Pink
+import com.hsdroid.insulinsync.ui.theme.Red
 import com.hsdroid.insulinsync.ui.theme.nasteFontFamily
 import com.hsdroid.insulinsync.ui.viewmodel.InsulinViewModel
 import com.hsdroid.insulinsync.utils.ApiState
@@ -87,7 +95,7 @@ import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ProfileScreen(navController: NavHostController, insulinViewModel: InsulinViewModel) {
+fun RegisterScreen(navController: NavHostController, insulinViewModel: InsulinViewModel) {
     val coroutineScope = rememberCoroutineScope()
     var name by remember {
         mutableStateOf("")
@@ -191,11 +199,82 @@ fun ProfileScreen(navController: NavHostController, insulinViewModel: InsulinVie
 }
 
 @Composable
+fun ProfileScreen(navController: NavHostController, insulinViewModel: InsulinViewModel) {
+
+    val profileResponse = insulinViewModel._profileResponse.collectAsState().value
+    val context = LocalContext.current
+
+    var profileData = remember {
+        listOf<Profile>()
+    }
+
+    when (profileResponse) {
+        is ApiState.SUCCESS -> profileData = profileResponse.data
+        is ApiState.FAILURE -> Toast.makeText(context, "Something went wrong", Toast.LENGTH_SHORT)
+            .show()
+
+        else -> ""
+    }
+    ConstraintLayout(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Background)
+    ) {
+
+        val (userView, newUserTxt) = createRefs()
+
+        Box(modifier = Modifier
+            .wrapContentSize()
+            .constrainAs(userView) {
+                start.linkTo(parent.start)
+                end.linkTo(parent.end)
+                top.linkTo(parent.top)
+                bottom.linkTo(newUserTxt.bottom)
+            }) {
+
+            LazyVerticalGrid(modifier = Modifier
+                .padding(horizontal = 8.dp)
+                .height(400.dp), columns = GridCells.Adaptive(150.dp), content = {
+                items(profileData) {
+                    ProfileCard(it.name, navController)
+                }
+            })
+        }
+
+
+        Text(text = buildAnnotatedString {
+            append("New User? ")
+            withStyle(
+                SpanStyle(
+                    color = Pink, fontFamily = nasteFontFamily, fontWeight = FontWeight.Medium
+                )
+            ) {
+                append("Register here.")
+            }
+        },
+            fontFamily = nasteFontFamily,
+            fontSize = 18.sp,
+            color = Color.White,
+            fontWeight = FontWeight.Light,
+            modifier = Modifier
+                .clickable {
+                    navController.navigate("register")
+                }
+                .constrainAs(newUserTxt) {
+                    start.linkTo(parent.start)
+                    end.linkTo(parent.end)
+                    bottom.linkTo(parent.bottom, margin = 18.dp)
+                })
+    }
+}
+
+@Composable
 fun HomeScreen(
-    navController: NavHostController,
-    insulinViewModel: InsulinViewModel,
-    receivedUname: String
+    navController: NavHostController, insulinViewModel: InsulinViewModel, receivedUname: String
 ) {
+
+    //send received uname to viewmodel
+    insulinViewModel.getAllData(receivedUname)
 
     val context = LocalContext.current
     val listData = insulinViewModel._response.collectAsState().value
@@ -424,17 +503,16 @@ private fun insulinCard(list: Insulin, insulinViewModel: InsulinViewModel) {
                                 Color.White
                             )
                     ) {
-                        DropdownMenuItem(text = { Text(text = "Delete") },
-                            onClick = {
-                                coroutineScope.launch(Dispatchers.IO) {
-                                    insulinViewModel.deleteData(list)
+                        DropdownMenuItem(text = { Text(text = "Delete") }, onClick = {
+                            coroutineScope.launch(Dispatchers.IO) {
+                                insulinViewModel.deleteData(list)
 
-                                    withContext(Dispatchers.Main) {
-                                        expandedState = false
-                                    }
-
+                                withContext(Dispatchers.Main) {
+                                    expandedState = false
                                 }
-                            })
+
+                            }
+                        })
                     }
                 }
             }
@@ -472,9 +550,7 @@ private fun insulinCard(list: Insulin, insulinViewModel: InsulinViewModel) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun AddAlertDialog(
-    showAddAlert: MutableState<Boolean>,
-    insulinViewModel: InsulinViewModel,
-    receivedUname: String
+    showAddAlert: MutableState<Boolean>, insulinViewModel: InsulinViewModel, receivedUname: String
 ) {
 
     val coroutineScope = rememberCoroutineScope()
@@ -493,24 +569,15 @@ private fun AddAlertDialog(
 
     AlertDialog(onDismissRequest = { /*TODO*/ }, confirmButton = { /*TODO*/ }, title = {
         Column(verticalArrangement = Arrangement.Center) {
-            OutlinedTextField(
-                modifier = Modifier.fillMaxWidth(),
-                textStyle = TextStyle(
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Medium,
-                    fontFamily = nasteFontFamily
-                ),
-                value = insulinName,
-                onValueChange = { insulinName = it },
-                label = {
-                    Text(
-                        text = "Enter Insulin name",
-                        fontFamily = nasteFontFamily,
-                        fontWeight = FontWeight.Light
-                    )
-                },
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done)
+            OutlinedTextField(modifier = Modifier.fillMaxWidth(), textStyle = TextStyle(
+                fontSize = 16.sp, fontWeight = FontWeight.Medium, fontFamily = nasteFontFamily
+            ), value = insulinName, onValueChange = { insulinName = it }, label = {
+                Text(
+                    text = "Enter Insulin name",
+                    fontFamily = nasteFontFamily,
+                    fontWeight = FontWeight.Light
+                )
+            }, singleLine = true, keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done)
             )
             Spacer(
                 modifier = Modifier
@@ -630,4 +697,53 @@ private fun AddAlertDialog(
         }
     })
 
+}
+
+@Composable
+private fun ProfileCard(uname: String, navController: NavHostController) {
+
+    Card(
+        shape = CircleShape,
+        modifier = Modifier
+            .size(196.dp)
+            .padding(8.dp)
+            .clickable {
+                navController.navigate("home/$uname")
+            },
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(8.dp)
+    ) {
+        ConstraintLayout(
+            modifier = Modifier
+                .fillMaxSize()
+                .align(Alignment.CenterHorizontally)
+        ) {
+
+            val (userImg, userName) = createRefs()
+
+            Image(imageVector = Icons.Default.Person,
+                contentDescription = null,
+                colorFilter = ColorFilter.tint(Red),
+                modifier = Modifier
+                    .size(128.dp)
+                    .padding(top = 18.dp)
+                    .constrainAs(userImg) {
+                        start.linkTo(parent.start)
+                        end.linkTo(parent.end)
+                        top.linkTo(parent.top)
+                    })
+
+            Text(text = uname,
+                fontSize = 20.sp,
+                color = Color.Black,
+                fontFamily = nasteFontFamily,
+                fontWeight = FontWeight.Light,
+                modifier = Modifier.constrainAs(userName) {
+                    start.linkTo(parent.start)
+                    end.linkTo(parent.end)
+                    top.linkTo(userImg.bottom)
+                })
+
+        }
+    }
 }

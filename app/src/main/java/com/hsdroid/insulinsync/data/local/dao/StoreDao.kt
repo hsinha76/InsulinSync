@@ -5,7 +5,6 @@ import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
-import androidx.room.Update
 import com.hsdroid.insulinsync.models.Insulin
 import kotlinx.coroutines.flow.Flow
 
@@ -14,8 +13,8 @@ interface StoreDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     fun insertData(insulin: Insulin)
 
-    @Query("SELECT * from insulinLog order by id DESC")
-    fun getAllData() : Flow<List<Insulin>>
+    @Query("SELECT * from insulinLog where uname = :uname order by id DESC")
+    fun getProfileData(uname: String): Flow<List<Insulin>>
 
     @Delete
     fun deleteData(insulin: Insulin)
