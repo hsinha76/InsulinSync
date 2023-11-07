@@ -1,6 +1,8 @@
 package com.hsdroid.insulinsync.ui.view
 
+import android.app.Activity
 import android.widget.Toast
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -209,7 +211,14 @@ fun ProfileScreen(navController: NavHostController, insulinViewModel: InsulinVie
     }
 
     when (profileResponse) {
-        is ApiState.SUCCESS -> profileData = profileResponse.data
+        is ApiState.SUCCESS -> if (profileResponse.data.isEmpty()) {
+            navController.navigate("register") {
+                popUpTo(0)
+            }
+        } else {
+            profileData = profileResponse.data
+        }
+
         is ApiState.FAILURE -> Toast.makeText(context, "Something went wrong", Toast.LENGTH_SHORT)
             .show()
 
@@ -266,6 +275,11 @@ fun ProfileScreen(navController: NavHostController, insulinViewModel: InsulinVie
                     bottom.linkTo(parent.bottom, margin = 18.dp)
                 })
     }
+
+    BackHandler(enabled = true, onBack = {
+        val activity = context as Activity
+        activity.finish()
+    })
 }
 
 @Composable
@@ -391,6 +405,10 @@ fun HomeScreen(
     if (showAddAlert.value) {
         AddAlertDialog(showAddAlert, insulinViewModel, receivedUname)
     }
+
+    BackHandler(enabled = true, onBack = {
+        navController.navigate("profile")
+    })
 }
 
 @Composable
