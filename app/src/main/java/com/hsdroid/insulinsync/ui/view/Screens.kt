@@ -1,6 +1,8 @@
 package com.hsdroid.insulinsync.ui.view
 
+import android.annotation.SuppressLint
 import android.app.Activity
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
@@ -30,7 +32,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Person
@@ -39,6 +43,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -47,14 +52,19 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -63,7 +73,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.ParagraphStyle
@@ -78,6 +87,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.navigation.NavHostController
+import com.airbnb.lottie.compose.LottieAnimation
+import com.airbnb.lottie.compose.LottieCompositionSpec
+import com.airbnb.lottie.compose.LottieConstants
+import com.airbnb.lottie.compose.rememberLottieComposition
 import com.hsdroid.insulinsync.R
 import com.hsdroid.insulinsync.models.Insulin
 import com.hsdroid.insulinsync.models.Profile
@@ -91,6 +104,7 @@ import com.hsdroid.insulinsync.utils.Helper.Companion.formatDosageTime
 import com.vsnappy1.timepicker.TimePicker
 import com.vsnappy1.timepicker.ui.model.TimePickerConfiguration
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.math.roundToInt
@@ -243,11 +257,13 @@ fun ProfileScreen(navController: NavHostController, insulinViewModel: InsulinVie
 
             LazyVerticalGrid(modifier = Modifier
                 .padding(horizontal = 8.dp)
-                .height(400.dp), columns = GridCells.Adaptive(150.dp), content = {
-                items(profileData) {
-                    ProfileCard(it.name, navController)
-                }
-            })
+                .height(400.dp),
+                columns = GridCells.Adaptive(150.dp),
+                content = {
+                    items(profileData) {
+                        ProfileCard(it.name, navController)
+                    }
+                })
         }
 
 
@@ -282,6 +298,8 @@ fun ProfileScreen(navController: NavHostController, insulinViewModel: InsulinVie
     })
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun HomeScreen(
     navController: NavHostController, insulinViewModel: InsulinViewModel, receivedUname: String
@@ -300,104 +318,200 @@ fun HomeScreen(
         listOf<Insulin>()
     }
 
-    when (listData) {
-        is ApiState.SUCCESS -> getAllInsulinData = listData.data
-        else -> Toast.makeText(context, "Something went wrong!", Toast.LENGTH_SHORT).show()
+    val isProgress = remember {
+        mutableStateOf(true)
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Pink)
-    ) {
+    val isListEmpty = remember {
+        mutableStateOf(false)
+    }
 
-        Card(
+    val showLazyColumn = remember {
+        mutableStateOf(false)
+    }
+
+    LaunchedEffect(key1 = 1) {
+        when (listData) {
+            is ApiState.SUCCESS -> getAllInsulinData = listData.data
+
+            is ApiState.FAILURE -> {
+                Toast.makeText(
+                    context, "Something went wrong!", Toast.LENGTH_SHORT
+                ).show()
+                isProgress.value = false
+            }
+
+            else -> "do nothing"
+        }
+    }
+
+    Scaffold(modifier = Modifier.fillMaxSize(), topBar = {
+        TopAppBar(modifier = Modifier
+            .fillMaxWidth()
+            .padding(8.dp),
+            title = {
+                Text(
+                    text = "Home",
+                    color = Color.Black,
+                    fontFamily = nasteFontFamily,
+                    fontWeight = FontWeight.Medium,
+                    fontSize = 18.sp,
+                    modifier = Modifier.padding(start = 8.dp)
+                )
+            },
+            colors = TopAppBarDefaults.smallTopAppBarColors(containerColor = Pink),
+            navigationIcon = {
+                Icon(imageVector = Icons.Default.ArrowBack,
+                    contentDescription = null,
+                    modifier = Modifier.clickable {
+                        navController.navigate("profile")
+                    })
+            })
+    }, content = {
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .wrapContentHeight()
-                .weight(2.5f),
-            colors = CardDefaults.cardColors(containerColor = Pink)
+                .fillMaxSize()
+                .background(Pink)
         ) {
-            Text(
-                text = buildAnnotatedString {
-                    append("Your drug\ncabinet")
-                    withStyle(style = ParagraphStyle(lineHeight = 5.sp)) {
-                        withStyle(style = SpanStyle(fontSize = 54.sp)) {
-                            append("$receivedUname 😁")
-                        }
-                    }
-                },
-                lineHeight = 50.sp,
-                fontFamily = nasteFontFamily,
-                fontWeight = FontWeight.Bold,
-                fontSize = 30.sp,
-                color = Color.Black,
+
+            Card(
                 modifier = Modifier
                     .fillMaxWidth()
                     .wrapContentHeight()
-                    .padding(18.dp, top = 40.dp),
-                textAlign = TextAlign.Start
-            )
-        }
+                    .weight(3f),
+                colors = CardDefaults.cardColors(containerColor = Pink)
+            ) {
 
-        Card(
-            shape = RoundedCornerShape(topStart = 30.dp, topEnd = 30.dp),
-            modifier = Modifier
-                .fillMaxWidth()
-                .fillMaxHeight()
-                .weight(5f),
-            colors = CardDefaults.cardColors(containerColor = Color.White)
-        ) {
-            ConstraintLayout(modifier = Modifier.fillMaxSize()) {
-
-                val (insulinLogTxt, listLazyColumn, addBtn) = createRefs()
-
-                Text(text = "Your Insulin's",
-                    fontFamily = nasteFontFamily,
-                    fontWeight = FontWeight.Medium,
-                    fontSize = 22.sp,
-                    modifier = Modifier
-                        .padding(horizontal = 14.dp, vertical = 18.dp)
-                        .constrainAs(insulinLogTxt) {
-                            start.linkTo(parent.start)
-                            top.linkTo(parent.top)
-                        })
-
-                Button(onClick = {
-                    showAddAlert.value = true
-                },
-                    shape = CircleShape,
-                    modifier = Modifier
-                        .size(48.dp)
-                        .constrainAs(addBtn) {
-                            end.linkTo(parent.end)
-                            top.linkTo(parent.top)
-                        }
-                        .padding(top = 16.dp, end = 14.dp),
-                    contentPadding = PaddingValues(1.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Pink)) {
-                    Icon(
-                        imageVector = Icons.Default.Add,
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Image(
+                        imageVector = Icons.Default.AccountCircle,
                         contentDescription = null,
-                        modifier = Modifier.size(20.dp),
-                        tint = Color.Red
+                        colorFilter = ColorFilter.tint(Red),
+                        modifier = Modifier
+                            .size(148.dp)
+                            .padding(top = 38.dp)
+                    )
+                    Text(
+                        text = buildAnnotatedString {
+                            append("Welcome back, ")
+                            withStyle(
+                                SpanStyle(
+                                    fontFamily = nasteFontFamily,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 20.sp,
+                                    color = Color.Black
+                                )
+                            ) {
+                                append("$receivedUname 😎")
+                            }
+                        },
+                        fontFamily = nasteFontFamily,
+                        fontWeight = FontWeight.Medium,
+                        fontSize = 18.sp,
+                        color = Color.Black,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(8.dp),
+                        textAlign = TextAlign.Center
                     )
                 }
-                LazyColumn(
-                    Modifier
-                        .padding(bottom = 100.dp)
-                        .constrainAs(listLazyColumn) {
+            }
+
+            Card(
+                shape = RoundedCornerShape(topStart = 30.dp, topEnd = 30.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .fillMaxHeight()
+                    .weight(5f),
+                colors = CardDefaults.cardColors(containerColor = Color.White)
+            ) {
+                ConstraintLayout(modifier = Modifier.fillMaxSize()) {
+
+                    val (insulinLogTxt, listLazyColumn, addBtn) = createRefs()
+
+                    Text(text = "Your Insulin",
+                        fontFamily = nasteFontFamily,
+                        fontWeight = FontWeight.Medium,
+                        fontSize = 22.sp,
+                        modifier = Modifier
+                            .padding(horizontal = 14.dp, vertical = 18.dp)
+                            .constrainAs(insulinLogTxt) {
+                                start.linkTo(parent.start)
+                                top.linkTo(parent.top)
+                            })
+
+                    Button(onClick = {
+                        showAddAlert.value = true
+                    },
+                        shape = CircleShape,
+                        modifier = Modifier
+                            .size(48.dp)
+                            .constrainAs(addBtn) {
+                                end.linkTo(parent.end)
+                                top.linkTo(parent.top)
+                            }
+                            .padding(top = 16.dp, end = 14.dp),
+                        contentPadding = PaddingValues(1.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Pink)) {
+                        Icon(
+                            imageVector = Icons.Default.Add,
+                            contentDescription = null,
+                            modifier = Modifier.size(20.dp),
+                            tint = Color.Red
+                        )
+                    }
+
+                    Box(contentAlignment = Alignment.Center,
+                        modifier = Modifier.constrainAs(listLazyColumn) {
                             start.linkTo(parent.start)
                             top.linkTo(insulinLogTxt.bottom)
                             end.linkTo(parent.end)
-                        }, verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    items(getAllInsulinData) {
-                        insulinCard(it, insulinViewModel)
-                    }
-                }
+                        }) {
 
+                        if (isProgress.value) {
+                            showCircularProgress()
+                        }
+
+                        if (isListEmpty.value) {
+                            showEmptyText()
+                        }
+
+                        if (showLazyColumn.value) {
+                            LazyColumn(
+                                Modifier.padding(bottom = 100.dp),
+                                verticalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                items(getAllInsulinData) {
+                                    insulinCard(it, insulinViewModel)
+                                }
+                            }
+                        }
+                    }
+
+
+                }
             }
+
+        }
+    })
+
+    LaunchedEffect(getAllInsulinData.size) {
+        isListEmpty.value = false
+        isProgress.value = true
+        showLazyColumn.value = false
+
+        if (getAllInsulinData.isEmpty()) {
+            delay(3000)
+            isProgress.value = false
+            isListEmpty.value = true
+        } else {
+            delay(3000)
+            isProgress.value = false
+            showLazyColumn.value = true
         }
 
     }
@@ -763,5 +877,35 @@ private fun ProfileCard(uname: String, navController: NavHostController) {
                 })
 
         }
+    }
+}
+
+@Composable
+private fun showCircularProgress() {
+    CircularProgressIndicator(modifier = Modifier.size(48.dp))
+}
+
+@Composable
+private fun showEmptyText() {
+
+    val composition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.empty_anim))
+
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center
+    ) {
+
+        LottieAnimation(
+            modifier = Modifier.size(250.dp),
+            composition = composition,
+            iterations = LottieConstants.IterateForever
+        )
+
+        Text(
+            text = "There's nothing here 😢",
+            fontWeight = FontWeight.Light,
+            fontFamily = nasteFontFamily,
+            fontSize = 14.sp
+        )
+
     }
 }

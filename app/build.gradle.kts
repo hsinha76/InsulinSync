@@ -94,4 +94,7 @@ dependencies {
     //TimePicker
     implementation ("com.github.vsnappy1:ComposeDatePicker:2.2.0")
 
+    //Lottie
+    implementation("com.airbnb.android:lottie-compose:6.0.1")
+
 }
