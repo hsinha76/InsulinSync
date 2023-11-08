@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -71,6 +72,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
@@ -392,7 +395,7 @@ fun HomeScreen(
                         contentDescription = null,
                         colorFilter = ColorFilter.tint(Red),
                         modifier = Modifier
-                            .size(148.dp)
+                            .size(128.dp)
                             .padding(top = 38.dp)
                     )
                     Text(
@@ -750,7 +753,7 @@ private fun AddAlertDialog(
 
             Text(
                 text = if (insulinTotalUnit.toInt() >= 0.5) {
-                    insulinTotalUnit.toInt().toString() + " Units"
+                    insulinTotalUnit.toInt().toString() + " Units (Total units)"
                 } else "Total units",
                 fontSize = 16.sp,
                 fontFamily = nasteFontFamily,
@@ -769,7 +772,7 @@ private fun AddAlertDialog(
             )
             Text(
                 text = if (dosageUnit.toInt() >= 0.5) {
-                    dosageUnit.toInt().toString() + " Units"
+                    dosageUnit.toInt().toString() + " Units (Per day)"
                 } else "Dosage unit (Per day)",
                 fontSize = 16.sp,
                 fontFamily = nasteFontFamily,
@@ -835,19 +838,18 @@ private fun AddAlertDialog(
 private fun ProfileCard(uname: String, navController: NavHostController) {
 
     Card(
-        shape = CircleShape,
         modifier = Modifier
-            .size(196.dp)
+            .size(170.dp)
             .padding(8.dp)
             .clickable {
                 navController.navigate("home/$uname")
             },
         colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(8.dp)
+        elevation = CardDefaults.cardElevation(8.dp), shape = CircleShape
     ) {
         ConstraintLayout(
             modifier = Modifier
-                .fillMaxSize()
+                .wrapContentSize()
                 .align(Alignment.CenterHorizontally)
         ) {
 
@@ -857,8 +859,8 @@ private fun ProfileCard(uname: String, navController: NavHostController) {
                 contentDescription = null,
                 colorFilter = ColorFilter.tint(Red),
                 modifier = Modifier
-                    .size(128.dp)
-                    .padding(top = 18.dp)
+                    .size(108.dp)
+                    .padding(top = 8.dp)
                     .constrainAs(userImg) {
                         start.linkTo(parent.start)
                         end.linkTo(parent.end)
@@ -866,7 +868,7 @@ private fun ProfileCard(uname: String, navController: NavHostController) {
                     })
 
             Text(text = uname,
-                fontSize = 20.sp,
+                fontSize = 18.sp,
                 color = Color.Black,
                 fontFamily = nasteFontFamily,
                 fontWeight = FontWeight.Light,
