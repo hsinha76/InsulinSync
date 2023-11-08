@@ -1,6 +1,8 @@
 package com.hsdroid.insulinsync.ui.view
 
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
@@ -10,6 +12,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -23,9 +26,16 @@ import dagger.hilt.android.AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
     private val insulinViewModel: InsulinViewModel by viewModels()
+    private var isSplash = true
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        installSplashScreen().setKeepOnScreenCondition() { isSplash }
+
+        Handler(Looper.getMainLooper()).postDelayed(Runnable {
+            isSplash = false
+        }, 1000)
+
         setContent {
             InsulinSyncTheme {
                 // A surface container using the 'background' color from the theme
