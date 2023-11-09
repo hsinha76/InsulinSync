@@ -13,4 +13,7 @@ interface ProfileDao {
 
     @Query("SELECT * from profile order by id ASC")
     fun getProfile(): Flow<List<Profile>>
+
+    @Query("SELECT EXISTS(SELECT * from profile where name = :uname)")
+    fun checkUsernameExists(uname: String): Boolean
 }

@@ -202,10 +202,27 @@ fun RegisterScreen(navController: NavHostController, insulinViewModel: InsulinVi
                                 return@Button
                             }
 
+                            var usernameExists = false
+
                             coroutineScope.launch(Dispatchers.IO) {
-                                insulinViewModel.addDataToProfile(Profile(name))
-                                withContext(Dispatchers.Main) {
-                                    navController.navigate("home/$name")
+                                if (insulinViewModel.checkUsernameExists(name)) {
+                                    usernameExists = true
+                                }
+
+                                if (usernameExists) {
+                                    withContext(Dispatchers.Main) {
+                                        Toast.makeText(
+                                            context,
+                                            "User already exists.",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                    }
+                                } else {
+                                    insulinViewModel.addDataToProfile(Profile(name))
+                                    withContext(Dispatchers.Main) {
+                                        navController.navigate("home/$name")
+                                    }
+
                                 }
                             }
                         },

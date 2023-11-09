@@ -16,17 +16,22 @@ class InsulinRepository @Inject constructor(
         profileDao.addProfile(profile)
     }
 
+    fun checkUserExists(uname: String): Boolean {
+        return profileDao.checkUsernameExists(uname)
+    }
+
     fun insertData(insulin: Insulin) {
         storeDao.insertData(insulin)
     }
 
-    fun getAllData(uname : String): Flow<List<Insulin>> {
+    fun getAllData(uname: String): Flow<List<Insulin>> {
         return storeDao.getProfileData(uname)
     }
 
-    fun getProfileData() : Flow<List<Profile>>{
+    fun getProfileData(): Flow<List<Profile>> {
         return profileDao.getProfile()
     }
+
     fun deleteData(insulin: Insulin) {
         storeDao.deleteData(insulin)
     }

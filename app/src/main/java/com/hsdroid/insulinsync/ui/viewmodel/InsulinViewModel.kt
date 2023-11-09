@@ -35,6 +35,10 @@ class InsulinViewModel @Inject constructor(private val repository: InsulinReposi
         repository.insertProfileData(profile)
     }
 
+    fun checkUsernameExists(uname: String) : Boolean{
+        return repository.checkUserExists(uname)
+    }
+
     fun addData(insulin: Insulin) {
         repository.insertData(insulin)
     }
