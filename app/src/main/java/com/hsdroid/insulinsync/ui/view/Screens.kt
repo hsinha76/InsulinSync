@@ -116,6 +116,7 @@ import kotlin.math.roundToInt
 @Composable
 fun RegisterScreen(navController: NavHostController, insulinViewModel: InsulinViewModel) {
     val coroutineScope = rememberCoroutineScope()
+    val context = LocalContext.current
     var name by remember {
         mutableStateOf("")
     }
@@ -192,6 +193,15 @@ fun RegisterScreen(navController: NavHostController, insulinViewModel: InsulinVi
                 if (showContinueBtn) {
                     Button(
                         onClick = {
+                            if (name.isEmpty()) {
+                                Toast.makeText(
+                                    context,
+                                    "Please enter name to continue",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                                return@Button
+                            }
+
                             coroutineScope.launch(Dispatchers.IO) {
                                 insulinViewModel.addDataToProfile(Profile(name))
                                 withContext(Dispatchers.Main) {
@@ -688,6 +698,7 @@ private fun AddAlertDialog(
     showAddAlert: MutableState<Boolean>, insulinViewModel: InsulinViewModel, receivedUname: String
 ) {
 
+    val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
     var insulinName by remember {
         mutableStateOf("")
@@ -803,6 +814,16 @@ private fun AddAlertDialog(
                 Spacer(modifier = Modifier.width(6.dp))
                 OutlinedButton(
                     onClick = {
+
+                        if (insulinName.isEmpty() || insulinTotalUnit <= 1 || dosageUnit <= 1) {
+                            Toast.makeText(
+                                context,
+                                "Please enter all the details",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                            return@OutlinedButton
+                        }
+
                         coroutineScope.launch(Dispatchers.IO) {
                             insulinViewModel.addData(
                                 Insulin(
