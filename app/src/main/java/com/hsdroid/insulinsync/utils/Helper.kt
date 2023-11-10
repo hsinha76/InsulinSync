@@ -1,5 +1,9 @@
 package com.hsdroid.insulinsync.utils
 
+import android.app.AlarmManager
+import android.app.PendingIntent
+import android.content.Context
+import android.content.Intent
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
@@ -21,7 +25,19 @@ class Helper {
             }
         }
 
+        fun setAlarm(context: Context, time: Long) {
+            val modifyDataIntent = Intent(context, ModifyDataReceiver::class.java)
+            val pendingIntent = PendingIntent.getBroadcast(
+                context, 0, modifyDataIntent, PendingIntent.FLAG_IMMUTABLE
+            )
 
+            val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+
+            if (System.currentTimeMillis() < time) {
+                alarmManager.set(AlarmManager.RTC_WAKEUP, time, pendingIntent)
+            }
+
+        }
 
     }
 }
