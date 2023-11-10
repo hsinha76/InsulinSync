@@ -2,7 +2,6 @@ package com.hsdroid.insulinsync.ui.view
 
 import android.annotation.SuppressLint
 import android.app.Activity
-import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
@@ -14,7 +13,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -62,23 +60,18 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.ParagraphStyle
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -89,6 +82,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.constraintlayout.compose.ConstraintLayout
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import com.airbnb.lottie.compose.LottieAnimation
 import com.airbnb.lottie.compose.LottieCompositionSpec
@@ -108,6 +102,7 @@ import com.vsnappy1.timepicker.TimePicker
 import com.vsnappy1.timepicker.ui.model.TimePickerConfiguration
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.math.roundToInt
@@ -195,9 +190,7 @@ fun RegisterScreen(navController: NavHostController, insulinViewModel: InsulinVi
                         onClick = {
                             if (name.isEmpty()) {
                                 Toast.makeText(
-                                    context,
-                                    "Please enter name to continue",
-                                    Toast.LENGTH_SHORT
+                                    context, "Please enter name to continue", Toast.LENGTH_SHORT
                                 ).show()
                                 return@Button
                             }
@@ -212,9 +205,7 @@ fun RegisterScreen(navController: NavHostController, insulinViewModel: InsulinVi
                                 if (usernameExists) {
                                     withContext(Dispatchers.Main) {
                                         Toast.makeText(
-                                            context,
-                                            "User already exists.",
-                                            Toast.LENGTH_SHORT
+                                            context, "User already exists.", Toast.LENGTH_SHORT
                                         ).show()
                                     }
                                 } else {
@@ -245,29 +236,46 @@ fun RegisterScreen(navController: NavHostController, insulinViewModel: InsulinVi
 }
 
 @Composable
-fun ProfileScreen(navController: NavHostController, insulinViewModel: InsulinViewModel) {
+fun ProfileScreen(
+    navController: NavHostController, insulinViewModel: InsulinViewModel = hiltViewModel()
+) {
 
-    val profileResponse = insulinViewModel._profileResponse.collectAsState().value
     val context = LocalContext.current
 
-    var profileData = remember {
-        listOf<Profile>()
+    var profileData by remember {
+        mutableStateOf(emptyList<Profile>())
     }
 
-    when (profileResponse) {
-        is ApiState.SUCCESS -> if (profileResponse.data.isEmpty()) {
-            navController.navigate("register") {
-                popUpTo(0)
+    var loadData by remember {
+        mutableStateOf(false)
+    }
+
+    val isProgress = remember {
+        mutableStateOf(true)
+    }
+
+    LaunchedEffect(true) {
+        insulinViewModel._profileResponse.collect {
+            when (it) {
+                is ApiState.SUCCESS -> if (it.data.isEmpty()) {
+                    navController.navigate("register") {
+                        popUpTo(0)
+                    }
+                } else {
+                    profileData = it.data
+                    loadData = true
+                    isProgress.value = false
+                }
+
+                is ApiState.FAILURE -> Toast.makeText(
+                    context, "Something went wrong", Toast.LENGTH_SHORT
+                ).show()
+
+                else -> ""
             }
-        } else {
-            profileData = profileResponse.data
         }
-
-        is ApiState.FAILURE -> Toast.makeText(context, "Something went wrong", Toast.LENGTH_SHORT)
-            .show()
-
-        else -> ""
     }
+
     ConstraintLayout(
         modifier = Modifier
             .fillMaxSize()
@@ -285,15 +293,13 @@ fun ProfileScreen(navController: NavHostController, insulinViewModel: InsulinVie
                 bottom.linkTo(newUserTxt.bottom)
             }) {
 
-            LazyVerticalGrid(modifier = Modifier
-                .padding(horizontal = 8.dp)
-                .height(400.dp),
-                columns = GridCells.Adaptive(150.dp),
-                content = {
-                    items(profileData) {
-                        ProfileCard(it.name, navController)
-                    }
-                })
+            if (isProgress.value) {
+                showCircularProgress()
+            }
+
+            if (loadData) {
+                lazygrid(profileData, navController)
+            }
         }
 
 
@@ -328,24 +334,37 @@ fun ProfileScreen(navController: NavHostController, insulinViewModel: InsulinVie
     })
 }
 
+@Composable
+fun lazygrid(profileData: List<Profile>, navController: NavHostController) {
+
+    LazyVerticalGrid(modifier = Modifier
+        .padding(horizontal = 8.dp)
+        .height(400.dp),
+        columns = GridCells.Adaptive(150.dp),
+        content = {
+            items(profileData) {
+                ProfileCard(it.name, navController)
+            }
+        })
+
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun HomeScreen(
-    navController: NavHostController, insulinViewModel: InsulinViewModel, receivedUname: String
+    navController: NavHostController,
+    insulinViewModel: InsulinViewModel = hiltViewModel(),
+    receivedUname: String
 ) {
 
-    //send received uname to viewmodel
-    insulinViewModel.getAllData(receivedUname)
-
     val context = LocalContext.current
-    val listData = insulinViewModel._response.collectAsState().value
     val showAddAlert = remember {
         mutableStateOf(false)
     }
 
-    var getAllInsulinData = remember {
-        listOf<Insulin>()
+    var getAllInsulinData by remember {
+        mutableStateOf(emptyList<Insulin>())
     }
 
     val isProgress = remember {
@@ -360,18 +379,33 @@ fun HomeScreen(
         mutableStateOf(false)
     }
 
-    LaunchedEffect(key1 = 1) {
-        when (listData) {
-            is ApiState.SUCCESS -> getAllInsulinData = listData.data
+    LaunchedEffect(true) {
+        insulinViewModel.getAllData(receivedUname)
 
-            is ApiState.FAILURE -> {
-                Toast.makeText(
-                    context, "Something went wrong!", Toast.LENGTH_SHORT
-                ).show()
-                isProgress.value = false
+        delay(1000)
+
+        insulinViewModel._response.collect {
+            when (it) {
+                is ApiState.SUCCESS -> if (it.data.isEmpty()) {
+                    isProgress.value = false
+                    isListEmpty.value = true
+                    showLazyColumn.value = false
+                } else {
+                    getAllInsulinData = it.data
+                    isListEmpty.value = false
+                    isProgress.value = false
+                    showLazyColumn.value = true
+                }
+
+                is ApiState.FAILURE -> {
+                    Toast.makeText(
+                        context, "Something went wrong!", Toast.LENGTH_SHORT
+                    ).show()
+                    isProgress.value = false
+                }
+
+                else -> "do nothing"
             }
-
-            else -> "do nothing"
         }
     }
 
@@ -528,23 +562,6 @@ fun HomeScreen(
 
         }
     })
-
-    LaunchedEffect(getAllInsulinData.size) {
-        isListEmpty.value = false
-        isProgress.value = true
-        showLazyColumn.value = false
-
-        if (getAllInsulinData.isEmpty()) {
-            delay(3000)
-            isProgress.value = false
-            isListEmpty.value = true
-        } else {
-            delay(3000)
-            isProgress.value = false
-            showLazyColumn.value = true
-        }
-
-    }
 
     if (showAddAlert.value) {
         AddAlertDialog(showAddAlert, insulinViewModel, receivedUname)
@@ -834,9 +851,7 @@ private fun AddAlertDialog(
 
                         if (insulinName.isEmpty() || insulinTotalUnit <= 1 || dosageUnit <= 1) {
                             Toast.makeText(
-                                context,
-                                "Please enter all the details",
-                                Toast.LENGTH_SHORT
+                                context, "Please enter all the details", Toast.LENGTH_SHORT
                             ).show()
                             return@OutlinedButton
                         }
@@ -875,20 +890,17 @@ private fun AddAlertDialog(
 @Composable
 private fun ProfileCard(uname: String, navController: NavHostController) {
 
-    Card(
-        modifier = Modifier
-            .size(170.dp)
-            .padding(8.dp)
-            .clickable {
-                navController.navigate("home/$uname")
-            },
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(8.dp), shape = CircleShape
-    ) {
+    Box(modifier = Modifier
+        .size(200.dp)
+        .padding(8.dp)
+        .background(Color.White, CircleShape)
+        .clickable {
+            navController.navigate("home/$uname")
+        }) {
         ConstraintLayout(
             modifier = Modifier
-                .wrapContentSize()
-                .align(Alignment.CenterHorizontally)
+                .fillMaxWidth()
+                .align(Alignment.Center)
         ) {
 
             val (userImg, userName) = createRefs()
@@ -898,7 +910,6 @@ private fun ProfileCard(uname: String, navController: NavHostController) {
                 colorFilter = ColorFilter.tint(Red),
                 modifier = Modifier
                     .size(108.dp)
-                    .padding(top = 8.dp)
                     .constrainAs(userImg) {
                         start.linkTo(parent.start)
                         end.linkTo(parent.end)
@@ -918,6 +929,7 @@ private fun ProfileCard(uname: String, navController: NavHostController) {
 
         }
     }
+
 }
 
 @Composable
