@@ -2,6 +2,7 @@ package com.hsdroid.insulinsync.ui.view
 
 import android.annotation.SuppressLint
 import android.app.Activity
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
@@ -856,6 +857,14 @@ private fun AddAlertDialog(
                             return@OutlinedButton
                         }
 
+                        if (insulinTotalUnit < dosageUnit) {
+                            Toast.makeText(
+                                context,
+                                "Total unit should be less than dosage unit",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                            return@OutlinedButton
+                        }
                         coroutineScope.launch(Dispatchers.IO) {
                             insulinViewModel.addData(
                                 Insulin(
