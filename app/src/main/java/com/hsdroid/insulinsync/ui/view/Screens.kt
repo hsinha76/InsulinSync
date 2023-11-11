@@ -5,6 +5,9 @@ import android.app.Activity
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutLinearInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -584,6 +587,18 @@ private fun insulinCard(list: Insulin, insulinViewModel: InsulinViewModel) {
     val context = LocalContext.current
     var expandedState by remember { mutableStateOf(false) }
 
+    val percent = remember { Animatable(0f) }
+
+    LaunchedEffect(key1 = Unit, block = {
+        percent.animateTo(
+            targetValue = list.quantityLeft / list.quantityTotal,
+            animationSpec = tween(
+                durationMillis = (1000 * (1f - percent.value)).toInt(),
+                easing = FastOutLinearInEasing
+            )
+        )
+    })
+
     Card(
         shape = RoundedCornerShape(24.dp),
         modifier = Modifier
@@ -591,7 +606,7 @@ private fun insulinCard(list: Insulin, insulinViewModel: InsulinViewModel) {
             .background(Color.White)
             .padding(start = 18.dp, end = 18.dp)
             .height(200.dp),
-        colors = CardDefaults.cardColors(containerColor = Background)
+        colors = CardDefaults.cardColors(containerColor = if (list.quantityLeft.toInt() == 0) Color.Red else Background)
     ) {
 
         ConstraintLayout(modifier = Modifier.padding(18.dp)) {
@@ -719,7 +734,9 @@ private fun insulinCard(list: Insulin, insulinViewModel: InsulinViewModel) {
                 )
 
                 LinearProgressIndicator(
-                    progress = 0f,
+                    color = if (list.quantityLeft >= 30) Color.Green else Color.Red,
+                    trackColor = Color.White,
+                    progress = percent.value,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(14.dp)
