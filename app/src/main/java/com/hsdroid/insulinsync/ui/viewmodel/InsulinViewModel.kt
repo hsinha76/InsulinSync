@@ -1,22 +1,30 @@
 package com.hsdroid.insulinsync.ui.viewmodel
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkManager
 import com.hsdroid.insulinsync.data.repository.InsulinRepository
 import com.hsdroid.insulinsync.models.Insulin
 import com.hsdroid.insulinsync.models.Profile
 import com.hsdroid.insulinsync.utils.ApiState
+import com.hsdroid.insulinsync.utils.DbWorker
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
+import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 @HiltViewModel
 class InsulinViewModel @Inject constructor(private val repository: InsulinRepository) :
     ViewModel() {
+
+    @Inject
+    lateinit var context: Context
 
     private val response: MutableStateFlow<ApiState<List<Insulin>>> =
         MutableStateFlow(ApiState.EMPTY)
@@ -31,11 +39,12 @@ class InsulinViewModel @Inject constructor(private val repository: InsulinReposi
     init {
         getProfileData()
     }
+
     fun addDataToProfile(profile: Profile) {
         repository.insertProfileData(profile)
     }
 
-    fun checkUsernameExists(uname: String) : Boolean{
+    fun checkUsernameExists(uname: String): Boolean {
         return repository.checkUserExists(uname)
     }
 
@@ -47,7 +56,7 @@ class InsulinViewModel @Inject constructor(private val repository: InsulinReposi
         repository.deleteData(insulin)
     }
 
-    fun getAllData(uname : String) = viewModelScope.launch {
+    fun getAllData(uname: String) = viewModelScope.launch {
         repository.getAllData(uname)
             .onStart { response.value = ApiState.LOADING }
             .catch { response.value = ApiState.FAILURE(it) }
@@ -59,5 +68,10 @@ class InsulinViewModel @Inject constructor(private val repository: InsulinReposi
             .onStart { profileResponse.value = ApiState.LOADING }
             .catch { profileResponse.value = ApiState.FAILURE(it) }
             .collect { profileResponse.value = ApiState.SUCCESS(it) }
+    }
+
+    fun refreshWorkManager() {
+        val myWorker = PeriodicWorkRequestBuilder<DbWorker>(2, TimeUnit.HOURS).build()
+        WorkManager.getInstance(context).enqueue(myWorker)
     }
 }

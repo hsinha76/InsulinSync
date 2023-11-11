@@ -269,6 +269,7 @@ fun ProfileScreen(
                     profileData = it.data
                     loadData = true
                     isProgress.value = false
+                    insulinViewModel.refreshWorkManager()
                 }
 
                 is ApiState.FAILURE -> Toast.makeText(

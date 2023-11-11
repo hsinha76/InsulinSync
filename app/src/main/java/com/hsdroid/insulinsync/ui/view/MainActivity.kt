@@ -43,9 +43,6 @@ class MainActivity : ComponentActivity() {
             isSplash = false
         }, 1000)
 
-        val myWorker = PeriodicWorkRequestBuilder<DbWorker>(2, TimeUnit.HOURS).build()
-        WorkManager.getInstance(applicationContext).enqueue(myWorker)
-
         setContent {
             InsulinSyncTheme {
                 // A surface container using the 'background' color from the theme
