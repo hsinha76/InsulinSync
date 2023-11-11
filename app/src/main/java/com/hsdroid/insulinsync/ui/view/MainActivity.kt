@@ -3,6 +3,7 @@ package com.hsdroid.insulinsync.ui.view
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
@@ -18,9 +19,15 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import androidx.work.PeriodicWorkRequest
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkManager
 import com.hsdroid.insulinsync.ui.theme.InsulinSyncTheme
 import com.hsdroid.insulinsync.ui.viewmodel.InsulinViewModel
+import com.hsdroid.insulinsync.utils.DbWorker
+import com.hsdroid.insulinsync.utils.Helper
 import dagger.hilt.android.AndroidEntryPoint
+import java.util.concurrent.TimeUnit
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -35,6 +42,9 @@ class MainActivity : ComponentActivity() {
         Handler(Looper.getMainLooper()).postDelayed(Runnable {
             isSplash = false
         }, 1000)
+
+        val myWorker = PeriodicWorkRequestBuilder<DbWorker>(2, TimeUnit.HOURS).build()
+        WorkManager.getInstance(applicationContext).enqueue(myWorker)
 
         setContent {
             InsulinSyncTheme {

@@ -99,6 +99,7 @@ import com.hsdroid.insulinsync.ui.theme.nasteFontFamily
 import com.hsdroid.insulinsync.ui.viewmodel.InsulinViewModel
 import com.hsdroid.insulinsync.utils.ApiState
 import com.hsdroid.insulinsync.utils.Helper.Companion.formatDosageTime
+import com.hsdroid.insulinsync.utils.Helper.Companion.storeTimeinMiliseconds
 import com.vsnappy1.timepicker.TimePicker
 import com.vsnappy1.timepicker.ui.model.TimePickerConfiguration
 import kotlinx.coroutines.Dispatchers
@@ -652,7 +653,7 @@ private fun insulinCard(list: Insulin, insulinViewModel: InsulinViewModel) {
                     Spacer(modifier = Modifier.width(4.dp))
 
                     Text(
-                        text = list.dosageTime,
+                        text = formatDosageTime(list.dosageTime),
                         fontFamily = nasteFontFamily,
                         fontWeight = FontWeight.Light,
                         fontSize = 14.sp,
@@ -868,12 +869,13 @@ private fun AddAlertDialog(
                         coroutineScope.launch(Dispatchers.IO) {
                             insulinViewModel.addData(
                                 Insulin(
+                                    null,
                                     receivedUname,
                                     insulinName,
                                     insulinTotalUnit,
                                     insulinTotalUnit,
                                     dosageUnit,
-                                    formatDosageTime(dosageTime)
+                                    storeTimeinMiliseconds(dosageTime)
                                 )
                             )
 

@@ -5,12 +5,13 @@ import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Update
 import com.hsdroid.insulinsync.models.Insulin
 import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface StoreDao {
-    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insertData(insulin: Insulin)
 
     @Query("SELECT * from insulinLog where uname = :uname order by id DESC")
@@ -18,4 +19,10 @@ interface StoreDao {
 
     @Delete
     fun deleteData(insulin: Insulin)
+
+    @Query("SELECT * from insulinLog where dosageTime >= :currentTimestamp AND dosageTime <= :futureTimeStamp")
+    fun getTimestamp(currentTimestamp: Long, futureTimeStamp: Long): List<Insulin>
+
+    @Update(onConflict = OnConflictStrategy.REPLACE)
+    fun modifyDatawithTime(insulin: Insulin)
 }
