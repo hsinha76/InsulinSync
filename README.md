@@ -7,6 +7,10 @@ An app designed to assist individuals with diabetes who regularly require insuli
 * Leverages Kotlin Flows for reactive programming, ensuring real-time updates and responsiveness.
 * Integrates additional libraries like Coil and Lottie for enhanced functionality and visual appeal.
 
+</br>
+
+> In short : This app automates insulin tracking by deducting daily dosage **automatically.**
+
 ## Demo
 ### Onboarding
 <img src ="https://github.com/hsinha76/InsulinSync/blob/1dcab2ab6ac8d811cea74ff8dc6de0dfde884b4e/demo/onboarding.gif" width="300"/>
