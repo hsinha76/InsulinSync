@@ -1,9 +1,8 @@
-package com.hsdroid.insulinsync.ui.view
+package com.hsdroid.insulinsync.ui
 
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
@@ -11,7 +10,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.navigation.NavType
@@ -19,15 +17,12 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import androidx.work.PeriodicWorkRequest
-import androidx.work.PeriodicWorkRequestBuilder
-import androidx.work.WorkManager
 import com.hsdroid.insulinsync.ui.theme.InsulinSyncTheme
+import com.hsdroid.insulinsync.ui.view.Home.HomeScreen
+import com.hsdroid.insulinsync.ui.view.Profile.ProfileScreen
+import com.hsdroid.insulinsync.ui.view.Register.RegisterScreen
 import com.hsdroid.insulinsync.ui.viewmodel.InsulinViewModel
-import com.hsdroid.insulinsync.utils.DbWorker
-import com.hsdroid.insulinsync.utils.Helper
 import dagger.hilt.android.AndroidEntryPoint
-import java.util.concurrent.TimeUnit
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {

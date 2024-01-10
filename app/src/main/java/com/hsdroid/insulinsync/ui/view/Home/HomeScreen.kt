@@ -1,8 +1,6 @@
-package com.hsdroid.insulinsync.ui.view
+package com.hsdroid.insulinsync.ui.view.Home
 
 import android.annotation.SuppressLint
-import android.app.Activity
-import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.Animatable
@@ -14,11 +12,9 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -29,9 +25,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -40,15 +33,12 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -60,7 +50,6 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -88,7 +77,6 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.constraintlayout.compose.ConstraintLayout
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import com.airbnb.lottie.compose.LottieAnimation
 import com.airbnb.lottie.compose.LottieCompositionSpec
@@ -96,273 +84,28 @@ import com.airbnb.lottie.compose.LottieConstants
 import com.airbnb.lottie.compose.rememberLottieComposition
 import com.hsdroid.insulinsync.R
 import com.hsdroid.insulinsync.models.Insulin
-import com.hsdroid.insulinsync.models.Profile
 import com.hsdroid.insulinsync.ui.theme.Background
 import com.hsdroid.insulinsync.ui.theme.Pink
 import com.hsdroid.insulinsync.ui.theme.Red
 import com.hsdroid.insulinsync.ui.theme.nasteFontFamily
+import com.hsdroid.insulinsync.ui.view.Common.showCircularProgress
 import com.hsdroid.insulinsync.ui.viewmodel.InsulinViewModel
 import com.hsdroid.insulinsync.utils.ApiState
-import com.hsdroid.insulinsync.utils.Helper.Companion.formatDosageTime
-import com.hsdroid.insulinsync.utils.Helper.Companion.storeTimeinMiliseconds
+import com.hsdroid.insulinsync.utils.Helper
 import com.vsnappy1.timepicker.TimePicker
 import com.vsnappy1.timepicker.ui.model.TimePickerConfiguration
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.math.roundToInt
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun RegisterScreen(navController: NavHostController, insulinViewModel: InsulinViewModel) {
-    val coroutineScope = rememberCoroutineScope()
-    val context = LocalContext.current
-    var name by remember {
-        mutableStateOf("")
-    }
-
-    var showContinueBtn by remember {
-        mutableStateOf(false)
-    }
-
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Background),
-        contentAlignment = Alignment.Center
-    ) {
-        ConstraintLayout(
-            modifier = Modifier.wrapContentSize()
-        ) {
-
-            val (headerText, etName, continueBtn) = createRefs()
-
-            Text(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 12.dp, horizontal = 10.dp)
-                    .constrainAs(headerText) {
-                        start.linkTo(parent.start)
-                        end.linkTo(parent.end)
-                        top.linkTo(parent.top)
-                    },
-                text = "What's your name?",
-                fontSize = 30.sp,
-                textAlign = TextAlign.Start,
-                color = Color.White,
-                fontFamily = nasteFontFamily,
-                fontWeight = FontWeight.Bold
-            )
-
-            OutlinedTextField(
-                value = name,
-                onValueChange = {
-                    name = it.also {
-                        if (it.length > 1) {
-                            showContinueBtn = true
-                        } else {
-                            showContinueBtn = false
-                        }
-                    }
-                },
-                colors = TextFieldDefaults.outlinedTextFieldColors(
-                    focusedBorderColor = Color.White, textColor = Color.White
-                ),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 8.dp)
-                    .constrainAs(etName) {
-                        start.linkTo(parent.start)
-                        end.linkTo(parent.end)
-                        top.linkTo(headerText.bottom)
-                    },
-                singleLine = true,
-                maxLines = 1,
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done)
-            )
-
-            Box(modifier = Modifier
-                .padding(horizontal = 8.dp, vertical = 20.dp)
-                .size(48.dp)
-                .constrainAs(continueBtn) {
-                    start.linkTo(parent.start)
-                    end.linkTo(parent.end)
-                    top.linkTo(etName.bottom)
-                }) {
-
-                if (showContinueBtn) {
-                    Button(
-                        onClick = {
-                            if (name.isEmpty()) {
-                                Toast.makeText(
-                                    context, "Please enter name to continue", Toast.LENGTH_SHORT
-                                ).show()
-                                return@Button
-                            }
-
-                            var usernameExists = false
-
-                            coroutineScope.launch(Dispatchers.IO) {
-                                if (insulinViewModel.checkUsernameExists(name)) {
-                                    usernameExists = true
-                                }
-
-                                if (usernameExists) {
-                                    withContext(Dispatchers.Main) {
-                                        Toast.makeText(
-                                            context, "User already exists.", Toast.LENGTH_SHORT
-                                        ).show()
-                                    }
-                                } else {
-                                    insulinViewModel.addDataToProfile(Profile(name))
-                                    withContext(Dispatchers.Main) {
-                                        navController.navigate("home/$name")
-                                    }
-
-                                }
-                            }
-                        },
-                        shape = CircleShape,
-                        modifier = Modifier.size(48.dp),
-                        contentPadding = PaddingValues(1.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = Pink)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Done,
-                            contentDescription = null,
-                            modifier = Modifier.size(20.dp),
-                            tint = Color.Red
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun ProfileScreen(
-    navController: NavHostController, insulinViewModel: InsulinViewModel = hiltViewModel()
-) {
-
-    val context = LocalContext.current
-
-    var profileData by remember {
-        mutableStateOf(emptyList<Profile>())
-    }
-
-    var loadData by remember {
-        mutableStateOf(false)
-    }
-
-    val isProgress = remember {
-        mutableStateOf(true)
-    }
-
-    LaunchedEffect(true) {
-        insulinViewModel._profileResponse.collect {
-            when (it) {
-                is ApiState.SUCCESS -> if (it.data.isEmpty()) {
-                    navController.navigate("register") {
-                        popUpTo(0)
-                    }
-                } else {
-                    profileData = it.data
-                    loadData = true
-                    isProgress.value = false
-                    insulinViewModel.refreshWorkManager()
-                }
-
-                is ApiState.FAILURE -> Toast.makeText(
-                    context, "Something went wrong", Toast.LENGTH_SHORT
-                ).show()
-
-                else -> ""
-            }
-        }
-    }
-
-    ConstraintLayout(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Background)
-    ) {
-
-        val (userView, newUserTxt) = createRefs()
-
-        Box(modifier = Modifier
-            .wrapContentSize()
-            .constrainAs(userView) {
-                start.linkTo(parent.start)
-                end.linkTo(parent.end)
-                top.linkTo(parent.top)
-                bottom.linkTo(newUserTxt.bottom)
-            }) {
-
-            if (isProgress.value) {
-                showCircularProgress()
-            }
-
-            if (loadData) {
-                lazygrid(profileData, navController)
-            }
-        }
-
-
-        Text(text = buildAnnotatedString {
-            append("New User? ")
-            withStyle(
-                SpanStyle(
-                    color = Pink, fontFamily = nasteFontFamily, fontWeight = FontWeight.Medium
-                )
-            ) {
-                append("Register here.")
-            }
-        },
-            fontFamily = nasteFontFamily,
-            fontSize = 18.sp,
-            color = Color.White,
-            fontWeight = FontWeight.Light,
-            modifier = Modifier
-                .clickable {
-                    navController.navigate("register")
-                }
-                .constrainAs(newUserTxt) {
-                    start.linkTo(parent.start)
-                    end.linkTo(parent.end)
-                    bottom.linkTo(parent.bottom, margin = 18.dp)
-                })
-    }
-
-    BackHandler(enabled = true, onBack = {
-        val activity = context as Activity
-        activity.finish()
-    })
-}
-
-@Composable
-fun lazygrid(profileData: List<Profile>, navController: NavHostController) {
-
-    LazyVerticalGrid(modifier = Modifier
-        .padding(horizontal = 8.dp)
-        .height(400.dp),
-        columns = GridCells.Adaptive(150.dp),
-        content = {
-            items(profileData) {
-                ProfileCard(it.name, navController)
-            }
-        })
-
-}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun HomeScreen(
     navController: NavHostController,
-    insulinViewModel: InsulinViewModel = hiltViewModel(),
+    insulinViewModel: InsulinViewModel,
     receivedUname: String
 ) {
 
@@ -671,7 +414,7 @@ private fun insulinCard(list: Insulin, insulinViewModel: InsulinViewModel) {
                     Spacer(modifier = Modifier.width(4.dp))
 
                     Text(
-                        text = formatDosageTime(list.dosageTime),
+                        text = Helper.formatDosageTime(list.dosageTime),
                         fontFamily = nasteFontFamily,
                         fontWeight = FontWeight.Light,
                         fontSize = 14.sp,
@@ -895,7 +638,7 @@ private fun AddAlertDialog(
                                     insulinTotalUnit,
                                     insulinTotalUnit,
                                     dosageUnit,
-                                    storeTimeinMiliseconds(dosageTime)
+                                    Helper.storeTimeinMiliseconds(dosageTime)
                                 )
                             )
 
@@ -916,57 +659,6 @@ private fun AddAlertDialog(
         }
     })
 
-}
-
-@Composable
-private fun ProfileCard(uname: String, navController: NavHostController) {
-
-    Box(modifier = Modifier
-        .height(200.dp)
-        .width(IntrinsicSize.Max)
-        .padding(8.dp)
-        .background(Color.White, CircleShape)
-        .clickable {
-            navController.navigate("home/$uname")
-        }) {
-        ConstraintLayout(
-            modifier = Modifier
-                .fillMaxWidth()
-                .align(Alignment.Center)
-        ) {
-
-            val (userImg, userName) = createRefs()
-
-            Image(imageVector = Icons.Default.Person,
-                contentDescription = null,
-                colorFilter = ColorFilter.tint(Red),
-                modifier = Modifier
-                    .size(108.dp)
-                    .constrainAs(userImg) {
-                        start.linkTo(parent.start)
-                        end.linkTo(parent.end)
-                        top.linkTo(parent.top)
-                    })
-
-            Text(text = uname,
-                fontSize = 18.sp,
-                color = Color.Black,
-                fontFamily = nasteFontFamily,
-                fontWeight = FontWeight.Light,
-                modifier = Modifier.constrainAs(userName) {
-                    start.linkTo(parent.start)
-                    end.linkTo(parent.end)
-                    top.linkTo(userImg.bottom)
-                })
-
-        }
-    }
-
-}
-
-@Composable
-private fun showCircularProgress() {
-    CircularProgressIndicator(modifier = Modifier.size(48.dp))
 }
 
 @Composable
