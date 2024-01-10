@@ -530,7 +530,7 @@ private fun AddAlertDialog(
                     .height(8.dp)
             )
             Text(
-                text = "Select your time",
+                text = "Dosage time",
                 fontSize = 16.sp,
                 fontFamily = nasteFontFamily,
                 fontWeight = FontWeight.Light
