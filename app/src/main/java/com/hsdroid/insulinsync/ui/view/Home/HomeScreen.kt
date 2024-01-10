@@ -73,6 +73,7 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.toLowerCase
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -98,6 +99,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.util.Locale
 import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -630,20 +632,31 @@ private fun AddAlertDialog(
                             return@OutlinedButton
                         }
                         coroutineScope.launch(Dispatchers.IO) {
-                            insulinViewModel.addData(
-                                Insulin(
-                                    null,
-                                    receivedUname,
-                                    insulinName,
-                                    insulinTotalUnit,
-                                    insulinTotalUnit,
-                                    dosageUnit,
-                                    Helper.storeTimeinMiliseconds(dosageTime)
-                                )
-                            )
 
-                            withContext(Dispatchers.Main) {
-                                showAddAlert.value = false
+                            if (insulinViewModel.checkInsulinExists(insulinName.lowercase(Locale.getDefault()))) {
+                                withContext(Dispatchers.Main) {
+                                    Toast.makeText(
+                                        context,
+                                        "Insulin with same name already exists!",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                }
+                            } else {
+                                insulinViewModel.addData(
+                                    Insulin(
+                                        null,
+                                        receivedUname,
+                                        insulinName,
+                                        insulinTotalUnit,
+                                        insulinTotalUnit,
+                                        dosageUnit,
+                                        Helper.storeTimeinMiliseconds(dosageTime)
+                                    )
+                                )
+
+                                withContext(Dispatchers.Main) {
+                                    showAddAlert.value = false
+                                }
                             }
                         }
                     },

@@ -14,6 +14,9 @@ interface StoreDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insertData(insulin: Insulin)
 
+    @Query("SELECT EXISTS(SELECT * from insulinLog where insulinName = :insulinName)")
+    fun checkInsulinExists(insulinName: String): Boolean
+
     @Query("SELECT * from insulinLog where uname = :uname order by id DESC")
     fun getProfileData(uname: String): Flow<List<Insulin>>
 

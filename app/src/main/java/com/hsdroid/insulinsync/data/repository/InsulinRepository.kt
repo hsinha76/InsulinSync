@@ -24,6 +24,10 @@ class InsulinRepository @Inject constructor(
         storeDao.insertData(insulin)
     }
 
+    fun checkInsulinExists(insulinName: String): Boolean {
+        return storeDao.checkInsulinExists(insulinName)
+    }
+
     fun getAllData(uname: String): Flow<List<Insulin>> {
         return storeDao.getProfileData(uname)
     }

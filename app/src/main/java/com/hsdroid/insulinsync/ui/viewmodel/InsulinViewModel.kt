@@ -52,6 +52,10 @@ class InsulinViewModel @Inject constructor(private val repository: InsulinReposi
         repository.insertData(insulin)
     }
 
+    fun checkInsulinExists(insulinName: String): Boolean {
+        return repository.checkInsulinExists(insulinName)
+    }
+
     fun deleteData(insulin: Insulin) {
         repository.deleteData(insulin)
     }
